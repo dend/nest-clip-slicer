@@ -117,7 +117,7 @@ def DeleteClip(config, clip_state):
 	request_url = f'https://webapi.camera.home.nest.com/api/clips.delete'
 	request_body = {"id": clip_state["items"][0]["id"]}
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
-	response = requests.get(request_url, headers=request_headers)
+	response = requests.delete(request_url, headers=request_headers)
 	return json.loads(response.content)
 
 config = LoadConfiguration()

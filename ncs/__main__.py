@@ -80,8 +80,8 @@ def LoadConfiguration():
 		print (f'Cookie value: {data["cookie"]}')
 		return data
 
-def GetAvailableClips(config):
-	request_url = f'https://nexusapi-us1.camera.home.nest.com/get_available?uuid={config["camera_id"]}&start_time={config["threshold"]}'
+def GetAvailableClips(config, end_time):
+	request_url = f'https://nexusapi-us1.camera.home.nest.com/get_available?uuid={config["camera_id"]}&end_time={end_time}'
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
 	response = requests.get(request_url, headers=request_headers)
 	print(response.content)
@@ -150,30 +150,35 @@ def ProcessClip(clip_data):
 			print(f'Clip deletion ended with result: {delete_result["status_description"]}')
 
 config = LoadConfiguration()
-clips = GetAvailableClips(config)
 
-i = 0
-for clip in clips:
-	if i < 3:
+clips = {}
+clips = GetAvailableClips(config, int(time.time()))
+
+previous_end = 0;
+
+while clips is not None:
+	for clip in clips:
 		clip_start = clip["start"]
 		clip_end = clip["end"]
 		duration = clip_end - clip_start
 
-		if duration > 3600:
+		if duration > int(config["max_video_length"]):
 			print(f"Large clip. {duration} seconds.")
-			number_of_videos = int(duration / 3600)
+			number_of_videos = int(duration / int(config["max_video_length"]))
 			print(f"Iterating on {number_of_videos} videos.")
 			range_start_time = clip_start
 			for x in range(number_of_videos):
-				clip_data = CreateClip(config, range_start_time, 3600, datetime.fromtimestamp(int(range_start_time)).strftime("%Y%m%d-%H%M%S"))
+				clip_data = CreateClip(config, range_start_time, int(config["max_video_length"]), datetime.fromtimestamp(int(range_start_time)).strftime("%Y%m%d-%H%M%S") + "_" + datetime.fromtimestamp(int(range_start_time = range_start_time + int(config["max_video_length"]))).strftime("%Y%m%d-%H%M%S"))
 				ProcessClip(clip_data)
-				range_start_time = range_start_time + 3600
+				range_start_time = range_start_time + int(config["max_video_length"])
 		else:
 			print(f"Small clip. {duration} seconds.")
 			clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
 			ProcessClip(clip_data)
-		
-		i = i+1
+
+	if previous_end != clips[0]["start"]:
+		previous_end = clips[0]["start"]
+		clips = GetAvailableClips(config, previous_end)
 	else:
 		break
 

@@ -84,6 +84,7 @@ def GetAvailableClips(config):
 	request_url = f'https://nexusapi-us1.camera.home.nest.com/get_available?uuid={config["camera_id"]}&start_time={config["threshold"]}'
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
 	response = requests.get(request_url, headers=request_headers)
+	print(response.content)
 	return json.loads(response.content)
 
 def CreateClip(config, start, duration, title):

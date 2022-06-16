@@ -113,7 +113,7 @@ def DownloadClip(config, clip_state):
 	except:
 		return False
 
-def DeleteClip(config, clip_state)
+def DeleteClip(config, clip_state):
 	request_url = f'https://webapi.camera.home.nest.com/api/clips.delete'
 	request_body = {"id": clip_state["items"][0]["id"]}
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}

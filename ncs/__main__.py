@@ -66,3 +66,22 @@
 #     The video ID is captured in the body of the request.
 #
 # Step 6: Proceed to the next video processing request.
+
+import json
+import requests
+
+def LoadConfiguration():
+	with open('config.json') as file:
+		data = json.load(file)
+		print (f'Camera ID: {data["camera_id"]}')
+		print (f'Timestamp threshold: {data["threshold"]}')
+		print (f'Cookie value: {data["cookie"]}')
+		return data
+
+def GetAvailableClips(config):
+	request_url = f'https://nexusapi-us1.camera.home.nest.com/get_available?uuid={config["camera_id"]}&end_time={config["threshold"]}'
+	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
+	response = requests.get(request_url, headers=request_headers)
+
+config = LoadConfiguration()
+clips = GetAvailableClips(config)

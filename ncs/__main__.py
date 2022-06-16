@@ -123,36 +123,41 @@ def DeleteClip(config, clip_state)
 config = LoadConfiguration()
 clips = GetAvailableClips(config)
 
+i = 0
 for clip in clips:
-	clip_start = clip["start"]
-	clip_end = clip["end"]
-	duration = clip_end - clip_start
-	clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
-	if clip_data is not None:
-		clip_id = clip_data["items"][0]["id"]
-		print(f'Got clip information: {clip_id}')
+	if i < 3:
+		clip_start = clip["start"]
+		clip_end = clip["end"]
+		duration = clip_end - clip_start
+		clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
+		if clip_data is not None:
+			clip_id = clip_data["items"][0]["id"]
+			print(f'Got clip information: {clip_id}')
 
-		clip_state = {}
-		is_clip_ready = False
-		while is_clip_ready == False:
-			print('Checking clip state...')
-			clip_state = CheckClip(config, clip_id)
-			if clip_state["items"][0]["is_generated"] == True:
-				print('Clip is ready')
-				is_clip_ready = True
-			else:
-				print('Clip is not ready. Waiting 10 seconds...')
-				time.sleep(10)
+			clip_state = {}
+			is_clip_ready = False
+			while is_clip_ready == False:
+				print('Checking clip state...')
+				clip_state = CheckClip(config, clip_id)
+				if clip_state["items"][0]["is_generated"] == True:
+					print('Clip is ready')
+					is_clip_ready = True
+				else:
+					print('Clip is not ready. Waiting 10 seconds...')
+					time.sleep(10)
 
-		print('Downloading clip...')
-		result = DownloadClip(config, clip_state);
-		print(f'Clip download attempt for {clip_state["items"][0]["title"]}.mp4 ended with result {result}')
-		
-		if result == True:
-			print('Deleting old clip...')
-			delete_result = DeleteClip(config, clip_state);
-			if delete_result is not None:
-				print(f'Clip deletion ended with result: {delete_result["status_description"]}')
+			print('Downloading clip...')
+			result = DownloadClip(config, clip_state);
+			print(f'Clip download attempt for {clip_state["items"][0]["title"]}.mp4 ended with result {result}')
+			
+			if result == True:
+				print('Deleting old clip...')
+				delete_result = DeleteClip(config, clip_state);
+				if delete_result is not None:
+					print(f'Clip deletion ended with result: {delete_result["status_description"]}')
+		i = i+1
+	else:
+		break
 
 print("Done processing.")
 

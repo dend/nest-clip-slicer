@@ -160,16 +160,16 @@ for clip in clips:
 		duration = clip_end - clip_start
 
 		if duration > 3600:
-			print("Large clip. {duration} seconds.")
+			print(f"Large clip. {duration} seconds.")
 			number_of_videos = int(duration / 3600)
-			print("Iterating on {number_of_videos} videos.")
+			print(f"Iterating on {number_of_videos} videos.")
 			range_start_time = clip_start
 			for x in range(number_of_videos):
 				clip_data = CreateClip(config, range_start_time, 3600, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
 				ProcessClip(clip_data)
 				range_start_time = range_start_time + 3600
 		else:
-			print("Small clip. {duration} seconds.")
+			print(f"Small clip. {duration} seconds.")
 			clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
 			ProcessClip(clip_data)
 		

@@ -92,6 +92,8 @@ def CreateClip(config, start, duration, title):
 	request_body = {"uuid": config["camera_id"], "title": title, "start_date": start, "is_public": "false", "length": duration, "target_length": "false", "donate_video": "false"}
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
 	response = requests.post(request_url, data=request_body, headers=request_headers)
+	print("Raw clip data:")
+	print(response.content)
 	return json.loads(response.content)
 
 def CheckClip(config, id):

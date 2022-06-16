@@ -1,3 +1,5 @@
 {
+	"threshold": "UNIX_TIMESTAMP_TO_START_LOOKUP",
+	"camera_id": "CAMERA_UUID",
 	"cookie": "TEST_DUMMY_VALUE"
 }

@@ -69,6 +69,8 @@
 
 import json
 import requests
+from datetime import datetime
+import time
 
 def LoadConfiguration():
 	with open('config.json') as file:
@@ -89,7 +91,34 @@ def CreateClip(config, start, duration, title):
 	request_body = {"uuid": config["uuid"], "title": title, "start_date": start, "is_public": "false", "length": duration, "target_length": "false", "donate_video": "false"}
 	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
 	response = requests.post(request_url, data=request_body, headers=request_headers)
+	return json.loads(response.content)
 
+def CheckClip(config, id):
+	request_url = f'https://webapi.camera.home.nest.com/api/clips.get?id={id}'
+	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
+	response = requests.get(request_url, headers=request_headers)
+	return json.loads(response.content)
+
+def DownloadClip(config, clip_state):
+	file_name = f"{clip_state['items'][0]['title']}.mp4"
+	request_url = clip_state['items'][0]['download_url']
+	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
+	response = requests.get(request_url, headers=request_headers)
+
+	try:
+		with open(file_name, "wb") as video_file:
+			print ("Downloading MP4 chunks...")
+			video_file.write(response.content)
+			return True
+	except:
+		return False
+
+def DeleteClip(config, clip_state)
+	request_url = f'https://webapi.camera.home.nest.com/api/clips.delete'
+	request_body = {"id": clip_state["items"][0]["id"]}
+	request_headers = { "Cookie": config["cookie"], "Origin": "https://home.nest.com", "Referer": "https://home.nest.com/"}
+	response = requests.get(request_url, headers=request_headers)
+	return json.loads(response.content)
 
 config = LoadConfiguration()
 clips = GetAvailableClips(config)
@@ -98,5 +127,32 @@ for clip in clips:
 	clip_start = clip["start"]
 	clip_end = clip["end"]
 	duration = clip_end - clip_start
+	clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
+	if clip_data is not None:
+		clip_id = clip_data["items"][0]["id"]
+		print(f'Got clip information: {clip_id}')
 
+		clip_state = {}
+		is_clip_ready = False
+		while is_clip_ready == False:
+			print('Checking clip state...')
+			clip_state = CheckClip(config, clip_id)
+			if clip_state["items"][0]["is_generated"] == True:
+				print('Clip is ready')
+				is_clip_ready = True
+			else:
+				print('Clip is not ready. Waiting 10 seconds...')
+				time.sleep(10)
+
+		print('Downloading clip...')
+		result = DownloadClip(config, clip_state);
+		print(f'Clip download attempt for {clip_state["items"][0]["title"]}.mp4 ended with result {result}')
+		
+		if result == True:
+			print('Deleting old clip...')
+			delete_result = DeleteClip(config, clip_state);
+			if delete_result is not None:
+				print(f'Clip deletion ended with result: {delete_result["status_description"]}')
+
+print("Done processing.")
 

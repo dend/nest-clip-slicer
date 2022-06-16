@@ -165,7 +165,7 @@ for clip in clips:
 			print(f"Iterating on {number_of_videos} videos.")
 			range_start_time = clip_start
 			for x in range(number_of_videos):
-				clip_data = CreateClip(config, range_start_time, 3600, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
+				clip_data = CreateClip(config, range_start_time, 3600, datetime.fromtimestamp(int(range_start_time)).strftime("%Y%m%d-%H%M%S"))
 				ProcessClip(clip_data)
 				range_start_time = range_start_time + 3600
 		else:

@@ -123,6 +123,32 @@ def DeleteClip(config, clip_state):
 	response = requests.delete(request_url, data=request_body, headers=request_headers)
 	return json.loads(response.content)
 
+def ProcessClip(clip_data):
+	clip_id = clip_data["items"][0]["id"]
+	print(f'Got clip information: {clip_id}')
+
+	clip_state = {}
+	is_clip_ready = False
+	while is_clip_ready == False:
+		print('Checking clip state...')
+		clip_state = CheckClip(config, clip_id)
+		if clip_state["items"][0]["is_generated"] == True:
+			print('Clip is ready')
+			is_clip_ready = True
+		else:
+			print('Clip is not ready. Waiting 10 seconds...')
+			time.sleep(10)
+
+	print('Downloading clip...')
+	result = DownloadClip(config, clip_state);
+	print(f'Clip download attempt for {clip_state["items"][0]["title"]}.mp4 ended with result {result}')
+	
+	if result == True:
+		print('Deleting old clip...')
+		delete_result = DeleteClip(config, clip_state);
+		if delete_result is not None:
+			print(f'Clip deletion ended with result: {delete_result["status_description"]}')
+
 config = LoadConfiguration()
 clips = GetAvailableClips(config)
 
@@ -132,32 +158,21 @@ for clip in clips:
 		clip_start = clip["start"]
 		clip_end = clip["end"]
 		duration = clip_end - clip_start
-		clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
-		if clip_data is not None:
-			clip_id = clip_data["items"][0]["id"]
-			print(f'Got clip information: {clip_id}')
 
-			clip_state = {}
-			is_clip_ready = False
-			while is_clip_ready == False:
-				print('Checking clip state...')
-				clip_state = CheckClip(config, clip_id)
-				if clip_state["items"][0]["is_generated"] == True:
-					print('Clip is ready')
-					is_clip_ready = True
-				else:
-					print('Clip is not ready. Waiting 10 seconds...')
-					time.sleep(10)
-
-			print('Downloading clip...')
-			result = DownloadClip(config, clip_state);
-			print(f'Clip download attempt for {clip_state["items"][0]["title"]}.mp4 ended with result {result}')
-			
-			if result == True:
-				print('Deleting old clip...')
-				delete_result = DeleteClip(config, clip_state);
-				if delete_result is not None:
-					print(f'Clip deletion ended with result: {delete_result["status_description"]}')
+		if duration > 3600:
+			print("Large clip. {duration} seconds.")
+			number_of_videos = int(duration / 3600)
+			print("Iterating on {number_of_videos} videos.")
+			range_start_time = clip_start
+			for x in range(number_of_videos):
+				clip_data = CreateClip(config, range_start_time, 3600, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
+				ProcessClip(clip_data)
+				range_start_time = range_start_time + 3600
+		else:
+			print("Small clip. {duration} seconds.")
+			clip_data = CreateClip(config, clip_start, duration, datetime.fromtimestamp(int(clip_start)).strftime("%Y%m%d-%H%M%S"))
+			ProcessClip(clip_data)
+		
 		i = i+1
 	else:
 		break
